@@ -1,20 +1,18 @@
-{-# LANGUAGE FlexibleContexts #-}
 import LIO
-import LIO.Run (privInit)
 import LIO.DCLabel
+import LIO.Run (privInit)
 
---------------------------------------------------------------------
--- DCLabel consists of two formula: secrecy %% integrity
---
--- secrecy: describes the authority required to make 
---          the data public.
---
--- integrity: describes the authority with which
---            data was endorsed/is required to modify.
+{- 
+   DCLabel consists of two formula: secrecy %% integrity
+  
+   secrecy: describes the authority required to make 
+            the data public.
+  
+   integrity: describes the authority with which
+              data was endorsed/is required to modify.
+-}
 --------------------------------------------------------------------
 
-
---------------------------------------------------------------------
 -- Secrecy
 --------------------------------------------------------------------
 
@@ -35,7 +33,6 @@ example1 =
   ------------------------------------------------------------------
  , canFlowTo ("alice" \/ "bob" %% True) ("bob" %% True)    == True ]
 
---------------------------------------------------------------------
 -- Integrity
 --------------------------------------------------------------------
 
@@ -57,7 +54,6 @@ example2 =
  , canFlowTo (True %% "alice" /\ "bob") (True %% "bob")   == True  ]
 
 
---------------------------------------------------------------------
 -- What happens when we combine data? Least Upper Bound!
 --------------------------------------------------------------------
 
@@ -72,17 +68,17 @@ example3 =
   ------------------------------------------------------------------
  , canFlowTo aliceBobData alice == False ]
 
---------------------------------------------------------------------
 -- How do we encode authority? Privileges.
 --------------------------------------------------------------------
 
--- A privilege can be used to:
---  - remove secrecy restrictions (make data more public)
---  - add integrity restrictions (make data more trustworthy)
+{-
+   A privilege can be used to:
+    - remove secrecy restrictions (make data more public)
+    - add integrity restrictions  (make data more trustworthy)
+-}
 
---
 -- downgradeP: make data as public as possible
---
+--------------------------------------------------------------------
 
 aP = toCNF "alice"
 
@@ -93,9 +89,8 @@ example4 =
   ------------------------------------------------------------------
  , downgradeP aP ("alice" /\ "bob" %% "alice") ]
 
---
 -- canFlowToP: more permisive canFlowTo check that uses privileges
---
+--------------------------------------------------------------------
 
 example5 =  -- revised example1
  [ canFlowToP aP ("alice" %% True) public            == False -- (T)
@@ -104,14 +99,18 @@ example5 =  -- revised example1
   ------------------------------------------------------------------
  , canFlowToP aP ("bob" %% True)   ("alice" %% True) == False ]
 
+-- I lied a bit
+--------------------------------------------------------------------
 
+{-
+  
+   Previous functions used "privilege descriptions", actual code
+   must provide actual privileges.
+  
+   A privilege is a value of type Priv, which TCB code can "mint" with
+   privInit (more on this later)
+  
+-}
 
--- Actually ...
-
--- Previous functions used "privilege descriptions", actual code
--- must provide actual privileges.
---
--- A privilege is a value of type Priv, which TCB code can "mint" with
--- privInit (more on this later)
-makeAlicePriv :: IO (Priv CNF)
-makeAlicePriv = privInit (toCNF "alice")
+mintAlicePriv :: IO DCPriv -- == Priv CNF
+mintAlicePriv = privInit $ toCNF "alice"
